@@ -1,0 +1,69 @@
+version: '3.8'
+services:
+  # User Service with Flask and PostgreSQL
+  user_service:
+    build: ./services/user_service
+    environment:
+      - POSTGRES_USER=shopEaseUser
+      - POSTGRES_PASSWORD=shopEasePass
+      - POSTGRES_DB=shopEaseUserDB
+    depends_on:
+      - user_db
+    ports:
+      - "5000:5000"
+
+  user_db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=shopEaseUser
+      - POSTGRES_PASSWORD=shopEasePass
+      - POSTGRES_DB=shopEaseUserDB
+    ports:
+      - "5432:5432"
+
+  # Product Service with Node.js and MongoDB
+  product_service:
+    build: ./services/product_service
+    environment:
+      - MONGO_URL=mongodb://product_db:27017/shopEaseProductDB
+    depends_on:
+      - product_db
+    ports:
+      - "3000:3000"
+  
+  product_db:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  # Order Service with Spring Boot and MySQL
+  order_service:
+    build: ./services/order_service
+    environment:
+      - MYSQL_ROOT_PASSWORD=shopEaseRoot
+      - MYSQL_DATABASE=shopEaseOrderDB
+    depends_on:
+      - order_db
+    ports:
+      - "8080:8080"
+
+  order_db:
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=shopEaseRoot
+      - MYSQL_DATABASE=shopEaseOrderDB
+    ports:
+      - "3308:3306"
+
+  # Reverse Proxy with Nginx
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "81:80"
+    depends_on:
+      - user_service
+      - product_service
+      - order_service
+    restart: always
